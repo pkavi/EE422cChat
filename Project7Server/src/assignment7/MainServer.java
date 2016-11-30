@@ -11,17 +11,21 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MainServer {
-	static HashMap<Integer, UserEntry> loginInfo=new HashMap<Integer,UserEntry>();
-	 static int globalUserId=0;
-	public static Object lockLoginInfo= new Object();//Locked whenever ids or loginInfo is written to
+	private static HashMap<Integer, UserEntry> loginInfo=new HashMap<Integer,UserEntry>();
+	 private static int globalUserId=0;
+	private static Object lockLoginInfo= new Object();//Locked whenever ids or loginInfo is written to
 	
 	
 	
 	
 	
-	static HashMap<Integer,Conversation> conversations=new  HashMap<Integer,Conversation>();
-	 static int conversationId=0;
-	 static Object lockConversations= new Object();//Locked whenever ids or conversations are written to
+	private static HashMap<Integer,Conversation> conversations=new  HashMap<Integer,Conversation>();
+	
+	 private static Object lockConversations= new Object();//Locked whenever ids or conversations are written to
+	 
+	 
+	 private static int globalConversationId=0;
+	 private static Object lockConversationId=new Object();
 	
 
 
@@ -29,6 +33,9 @@ public class MainServer {
 	
 	public static void main(String[] args){
 		int portNumber = Integer.parseInt(args[0]);
+		
+		Thread mainConvoMonitor=new Thread(new ConversationsMonitor());
+		mainConvoMonitor.start();
 		
 		   try {
 		            ServerSocket serverSocket = new ServerSocket(portNumber);
@@ -102,6 +109,11 @@ public class MainServer {
 		}
 		
 	}
+	public static UserEntry getUser(int userId){
+		synchronized(loginInfo){
+			return loginInfo.get(userId);
+		}
+	}
 	
 	public static String usersString(){
 		String usersString;
@@ -112,6 +124,50 @@ public class MainServer {
 			}
 		}
 		return usersString;
+	}
+	
+	public static Conversation getConversation(int conversationId){
+		synchronized(MainServer.lockConversations){
+			return MainServer.conversations.get(conversationId);
+		}
+	}
+	
+	public static int getNewConversationId(){
+		int returner;
+		synchronized(lockConversationId){
+		returner=globalConversationId;
+		
+		globalConversationId++;
+		}
+		return returner;
+	}
+	
+	public static HashMap<Integer,Conversation> conversationsCopy(){
+		HashMap<Integer,Conversation> ret=new HashMap<Integer,Conversation>();
+		synchronized(lockConversations){
+			for(Conversation e:ret.values()){
+				ret.put(e.getConversationId(), e);
+			}
+		}
+		return ret;
+	}
+	
+	public static String getConversationRequestsForUser(int userId){
+		HashMap<Integer,Conversation> ret=conversationsCopy();
+		String res="";
+		int num=0;
+		for(Conversation c:ret.values()){
+			if(c.getConversationId()==userId){
+				if(c.containsUser(userId)){
+					if(!c.getRequestedForUserAndSet(userId)){
+						res=res+" "+c.getConversationId()+c.getUsersInConversation();
+						num++;
+					}
+				}
+			}
+		}
+
+		return " "+num+res;
 	}
 	
 	

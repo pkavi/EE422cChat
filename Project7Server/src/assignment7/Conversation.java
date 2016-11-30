@@ -31,10 +31,7 @@ public class Conversation {
 	
 	
 	public Conversation(){
-		synchronized(MainServer.lockConversations){
-			conversationId=MainServer.conversationId;
-			MainServer.conversationId++;
-		}
+		conversationId=MainServer.getNewConversationId();
 		
 	}
 	
@@ -79,7 +76,7 @@ public class Conversation {
 					int sender=messages.get(i).getSender();
 					String timestamp=messages.get(i).getTimestamp();
 					String msg=messages.get(i).getMsg();
-					returnStr=returnStr+" "+sender+" "+timestamp.length()+" "+msg.length()+" "+msg; 
+					returnStr=returnStr+" "+sender+" "+timestamp.length()+" "+msg.length()+" "+timestamp+" "+msg; 
 				}
 			}
 			else{
@@ -94,9 +91,46 @@ public class Conversation {
 		synchronized(lockActiveParticipants){
 			returnStr=returnStr+" "+activeParticipants.size();
 			for(Integer id:activeParticipants.keySet()){
-				returnStr=returnStr+" "+activeParticipantsactiveParticipants.get(id)
+				returnStr=returnStr+" "+id+" "+convertBooleanToInt(activeParticipants.get(id));
 			}
 		}
+		return returnStr;
+	}
+	
+	public void addMsgToConversation(int userId, String timestamp, String msg){
+		Message a=new Message(userId,timestamp,msg);
+		synchronized(lockMessages){
+			messages.add(a);
+		}
+		synchronized(lockActiveParticipants){
+			lastUpdated.put(userId, System.currentTimeMillis());
+			activeParticipants.put(userId, true);
+		}
+	}
+	
+	public boolean containsUser(int userId){
+		synchronized(lockParticipants){
+			for(Integer i:participants.keySet()){
+				if(i==userId){
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	
+	public boolean getRequestedForUserAndSet(int userId){//Sets the request to serviced if false
+		boolean ret=true;
+		synchronized(lockRequestSent){
+			ret=requestSent.get(userId);
+		}
+		if(ret==false){
+			setUserIdRequestSent(userId);
+			return false;
+		}
+		return true;
+		
 	}
 	public int convertBooleanToInt(boolean s){
 		if(s){
@@ -104,8 +138,31 @@ public class Conversation {
 		}
 		return 0;
 	}
-	public void setFlagForActiveConversation(){
+	
+	
+	
+	public String getUsersInConversation(){
+		String res;
+		synchronized(lockParticipants){
+			res=" "+participants.size();
+			for(Integer i:participants.keySet()){
+				res=res+" "+i;
+			}
+		}
+		return res;
 		
+		
+	}
+	public void setFlagForActiveConversation(long maxDelay){
+		synchronized(lockActiveParticipants){
+			for(Integer i:activeParticipants.keySet()){
+				if(Math.abs(lastUpdated.get(i)-System.currentTimeMillis())<maxDelay){
+					activeParticipants.put(i, true);
+				}else{
+					activeParticipants.put(i, false);
+				}
+			}
+		}
 	}
 	
 	

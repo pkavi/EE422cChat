@@ -21,7 +21,5 @@ public class UserEntry {
 	}
 
 	
-	public void setConnectedClient(){
-		
-	}
+
 }
