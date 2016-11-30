@@ -13,14 +13,9 @@
 
 package assignment7;
 
-import java.io.*;
-import java.net.*;
 import java.util.*;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -34,20 +29,22 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class ClientMain extends Application{
-	int port;
-	String serverIP;
-	BufferedReader in;
-	PrintWriter out;
-	Socket socket;
-	String username;
-	String password;
-	int userID;
-	HashMap<Integer, Stage> conversations; //tracks the conversation ID and stage for each conversation
-	HashMap<Integer, Integer> messagesPerConversation; //tracks the number of messages for each conversation - useful for 
-    boolean runSocket = false;
+	static int port = -1;
+	static String serverIP = "";
+	static BufferedReader in = null;
+	static PrintWriter out = null;
+	static Socket socket = null;
+	static String username = "";
+	static String password = "";
+	static int userID = -1;
+	static HashMap<Integer, ChatWindow> conversations = new HashMap<Integer, ChatWindow>(); //tracks the conversation ID and stage for each conversation
+	static HashMap<Integer, Integer> messagesPerConversation = new HashMap<Integer, Integer>(); //tracks the number of messages for each conversation - useful for 
+	static HashMap<Integer, String> usernames = new HashMap<Integer, String>(); //contains the user IDs and corresponding usernames
+	static boolean runSocket = false;
+    UsersWindow u;
 
 	public void start(Stage primaryStage){
-		Button submit = new Button("Submit");
+		Button submit = new Button("Connect");
 	    TextField ip = new TextField();
 	    TextField portNum = new TextField();
 	    GridPane ipGrid = new GridPane();
@@ -100,6 +97,12 @@ public class ClientMain extends Application{
 				
 				System.out.println("SUCCESSS");
 				
+			    HashMap<Integer, String> a = new HashMap<Integer, String>();
+			    a.put(1, "a");
+			    a.put(2,  "b");
+			    u = new UsersWindow(a, out);
+			    u.start(new Stage());
+				
 				submit.setDisable(true);
 	    	}
 	    	catch(Exception a){
@@ -120,12 +123,47 @@ public class ClientMain extends Application{
 	    primaryStage.setScene(scene);
 	    primaryStage.show();
 	    
-	    ChatWindow chat = new ChatWindow(1, userID, out, in);
-	    chat.start(new Stage());
+	    //Thread polling = new Thread((Runnable)new PollingThread());
+	    //polling.start();
+	    
+	    ChatRequestWindow kek = new ChatRequestWindow("kek");
+	    kek.start(new Stage());
 	}
 	
-	public void usersWindow(){
-		
+	public static BufferedReader getServerInput(){
+		return in;
+	}
+	
+	public static PrintWriter getClientOutput(){
+		return out;
+	}
+	
+	public static String getUsername(){
+		return username;
+	}
+	
+	public static int getUserID(){
+		return userID;
+	}
+	
+	public static HashMap<Integer, Integer> getMessagesPerConversation(){
+		return messagesPerConversation;
+	}
+	
+	public static void updateMessagesPerConversation(Integer conversationID, Integer numMessages){
+		messagesPerConversation.put(conversationID, numMessages);
+	}
+	
+	public static void addNewConversation(Integer conversationID, Integer numMessages){
+		messagesPerConversation.put(conversationID, numMessages);
+	}
+	
+	public static HashMap<Integer, String> getUsernames(){
+		return usernames;
+	}
+	
+	public static void setUsernames(HashMap<Integer, String> updated){
+		usernames = new HashMap<Integer, String>(updated);
 	}
 	
 	public static void main(String[] args){
