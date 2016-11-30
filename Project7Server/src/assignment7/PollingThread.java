@@ -15,15 +15,16 @@ import java.net.Socket;
 public class PollingThread implements Runnable{
 	
 	private BufferedReader in = ClientMain.getServerInput();
+	private PrintWriter out = ClientMain.getClientOutput();
 
 	@Override
 	public void run() {
 		while(true){
-			synchronized(ClientMain.getClientOutput()){
-				String serverOutput;
+			synchronized(out){
+				String serverOutput = "";
 				try {
 					while ((serverOutput = in.readLine()) != null) {
-					    //parseOutput
+					    ClientParser.parseInput(serverOutput);
 					}
 				} 
 				catch (IOException e) {
@@ -39,6 +40,4 @@ public class PollingThread implements Runnable{
 			}
 		}
 	}
-	
-	
 }
