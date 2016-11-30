@@ -19,18 +19,29 @@ public class PollingThread implements Runnable{
 
 	@Override
 	public void run() {
+		out.println(ClientParser.getUsersInNetwork_05_Send(ClientMain.getUserID()));
+		System.out.println(ClientParser.getUsersInNetwork_05_Send(ClientMain.getUserID()));
+		try {
+			String a = in.readLine();
+			System.out.println(a);
+			ClientParser.parseInput(a);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 		while(true){
-			synchronized(out){
+			
 				String serverOutput = "";
 				try {
 					while ((serverOutput = in.readLine()) != null) {
 					    ClientParser.parseInput(serverOutput);
+					    System.out.println(serverOutput);
 					}
 				} 
 				catch (IOException e) {
 					e.printStackTrace();
 				}
-			}
+			
+			
 			
 			try {
 				Thread.sleep(500);
