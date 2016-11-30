@@ -31,6 +31,7 @@ public class ChatWindow extends Application{
 	private PrintWriter out;
 	private BufferedReader in;
 	private TextArea messages;
+	private TextField messageField;
 	
 	public ChatWindow(int conversationID, int userID, PrintWriter out, BufferedReader in){
 		this.conversationID = conversationID;
@@ -43,7 +44,7 @@ public class ChatWindow extends Application{
 	public void start(Stage primaryStage){
 		mainStage = primaryStage;
 		
-		TextField messageField = new TextField(); 
+		messageField = new TextField(); 
 		BorderPane textPane = new BorderPane();
 		textPane.setPadding(new Insets(10,10,10,10));
 		textPane.setCenter(messageField);
@@ -66,6 +67,7 @@ public class ChatWindow extends Application{
 					String textToSend = messageField.getText();
 					out.println("Message goes here");
 					out.flush();
+					messageField.setEditable(false);
 				}
 				catch (Exception a){
 					System.out.println("Error sending Message");
@@ -76,6 +78,15 @@ public class ChatWindow extends Application{
 	
 	public void updateMessages(String s){
 		messages.appendText(s + "\n");
+		messageCount++;
+	}
+	
+	public void enableMessages(){
+		messageField.setEditable(true);
+	}
+	
+	public PrintWriter getClientOutput(){
+		return out;
 	}
 	
 	public void quit(){
