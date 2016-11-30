@@ -31,11 +31,15 @@ public class UsersWindow extends Application{
 	Stage mainStage;
 	GridPane usersPane;
 	PrintWriter out;
+	BufferedReader in;
+	Button request;
 	
-	public UsersWindow(HashMap<Integer, String> users, PrintWriter out){
+	public UsersWindow(HashMap<Integer, String> users, PrintWriter out, BufferedReader in){
 		userChoices = new ArrayList<CheckBox>();
 		this.users = users;
 		this.out = out;
+		this.in=in;
+		
 	}
 	
 	public UsersWindow(PrintWriter out){
@@ -60,17 +64,24 @@ public class UsersWindow extends Application{
 		BorderPane buttonPane = new BorderPane();
 		buttonPane.setPadding(new Insets(5,5,5,5));
 		
-		Button request = new Button("Send Chat Request");
+		request = new Button("Send Chat Request");
 		
 	    request.setOnAction(e ->{ //if the button is clicked, try to login to the server 
 	    	try{
 		    	ArrayList<String> selectedUsers = getSelectedBoxes();
-		    	String users = "";
-		    	for(String s:selectedUsers)
-		    		users+=s + " ";
-		    	out.println(users);
-		    	out.flush();
-		    	System.out.println(users);
+		    	ArrayList<Integer> selectedUserIds = getUserIDs(selectedUsers);
+		    	String res;
+		    	int s;
+		    	synchronized(ClientMain.conversationWindows){
+		    		s=ClientMain.conversationWindows.size();
+		    		ClientMain.conversationWindows.add(new ChatWindow(ClientMain.getUserID(),out,in));
+		    	}
+		    	res=ClientParser.makeConversation_03_Send(ClientMain.getUserID(), s, selectedUserIds);
+		    	synchronized(out){
+		    		out.println(res);
+		    		//out.flush();
+		    	}
+
 	    	}
 	    	catch(Exception a){
 	    		a.printStackTrace();
@@ -102,6 +113,20 @@ public class UsersWindow extends Application{
 			usersPane.add(c, 0, i);
 			i++;
 		}
+	}
+	
+	
+	private ArrayList<Integer> getUserIDs(ArrayList<String> usernames){
+		ArrayList<Integer> userIDs = new ArrayList<Integer>();
+		
+		for(String s:usernames){
+			for(Map.Entry<Integer, String> m : users.entrySet()){
+				if(m.getValue().equals(s)){
+					userIDs.add(m.getKey());
+				}
+			}
+		}
+		return userIDs;
 	}
 	
 	private ArrayList<String> getSelectedBoxes(){
