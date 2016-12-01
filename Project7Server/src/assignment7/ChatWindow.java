@@ -24,7 +24,7 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class ChatWindow extends Application{
-	private int conversationID;
+	private int serverConversationID;
 	private Stage mainStage;
 	private int messageCount;
 	private int userID;
@@ -32,17 +32,30 @@ public class ChatWindow extends Application{
 	private BufferedReader in;
 	private TextArea messages;
 	private TextField messageField;
+	Boolean active=false;
 	
-	public ChatWindow(int conversationID, int userID, PrintWriter out, BufferedReader in){
-		this.conversationID = conversationID;
+	public ChatWindow( int userID, PrintWriter out, BufferedReader in){
 		messageCount = 0;
 		this.userID = userID;
 		this.out = out;
 		this.in = in;
 	}
+
 	
+	public boolean active(){
+		synchronized(active){
+			return active;
+		}
+	}
+	
+	public void setServerConversationId(int id){
+		this.serverConversationID=id;
+	}
 	public void start(Stage primaryStage){
 		mainStage = primaryStage;
+		synchronized(active){
+			active=true;
+		}
 		
 		messageField = new TextField(); 
 		BorderPane textPane = new BorderPane();
@@ -59,14 +72,17 @@ public class ChatWindow extends Application{
 		
 		Scene scene = new Scene(mainPane, 500, 500);
 		mainStage.setScene(scene);
+		mainStage.setTitle("" + serverConversationID);
 		mainStage.show();
 		
 		messageField.setOnAction(e -> {
 			synchronized(out){
 				try{
 					String textToSend = messageField.getText();
-					out.println("Message goes here");
-					out.flush();
+					synchronized(out){
+						out.println("Message goes here");
+						out.flush();
+					}
 					messageField.setEditable(false);
 				}
 				catch (Exception a){
@@ -97,7 +113,5 @@ public class ChatWindow extends Application{
 		return messageCount;
 	}
 	
-	public int getConversationID(){
-		return conversationID;
-	}
+
 }
