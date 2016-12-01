@@ -41,9 +41,15 @@ public class ClientMain extends Application{
 	static HashMap<Integer, Integer> messagesPerConversation = new HashMap<Integer, Integer>(); //tracks the number of messages for each conversation - useful for 
 	static HashMap<Integer, String> usernames = new HashMap<Integer, String>(); //contains the user IDs and corresponding usernames
 	static boolean runSocket = false;
-    UsersWindow u;
-
-	public void start(Stage primaryStage){
+    static UsersWindow u;
+    static Thread polling;
+    
+    
+    static ArrayList<ChatWindow> conversationWindows=new ArrayList<ChatWindow>();
+    
+ 
+	
+  public void start(Stage primaryStage){
 		Button submit = new Button("Connect");
 	    TextField ip = new TextField();
 	    TextField portNum = new TextField();
@@ -69,10 +75,15 @@ public class ClientMain extends Application{
 		    		username = usernameInput.getText();
 		    		password = passwordInput.getText();
 		    		
-					out.println("01 " + username.length() + " " + password.length() + " " + username + " " + password);
-					out.flush();
+		    		synchronized(out){
+		    			out.println("01 " + username.length() + " " + password.length() + " " + username + " " + password);
+		    			out.flush();
+		    		}
 		    		
-					System.out.println(in.readLine());
+					ClientParser.parseInput(in.readLine());
+					
+					polling = new Thread((Runnable) new PollingThread());
+					polling.start();
 					
 					submitLogin.setDisable(true);
 		    	}
@@ -98,14 +109,13 @@ public class ClientMain extends Application{
 				System.out.println("SUCCESSS");
 				
 			    HashMap<Integer, String> a = new HashMap<Integer, String>();
-			    a.put(1, "a");
-			    a.put(2,  "b");
-			    u = new UsersWindow(a, out);
+			    u = new UsersWindow(a, out, in);
 			    u.start(new Stage());
 				
 				submit.setDisable(true);
 	    	}
 	    	catch(Exception a){
+	    		a.printStackTrace();
 	    		System.out.println("IP parsing error");
 	    	}
 	    });
@@ -123,11 +133,6 @@ public class ClientMain extends Application{
 	    primaryStage.setScene(scene);
 	    primaryStage.show();
 	    
-	    //Thread polling = new Thread((Runnable)new PollingThread());
-	    //polling.start();
-	    
-	    ChatRequestWindow kek = new ChatRequestWindow("kek");
-	    kek.start(new Stage());
 	}
 	
 	public static BufferedReader getServerInput(){
@@ -144,6 +149,14 @@ public class ClientMain extends Application{
 	
 	public static int getUserID(){
 		return userID;
+	}
+	
+	public static void setuserID(int ID){
+		userID = ID;
+	}
+	
+	public static void loginFailure(){
+		System.exit(0);
 	}
 	
 	public static HashMap<Integer, Integer> getMessagesPerConversation(){
@@ -164,6 +177,7 @@ public class ClientMain extends Application{
 	
 	public static void setUsernames(HashMap<Integer, String> updated){
 		usernames = new HashMap<Integer, String>(updated);
+		u.updateUsers(usernames);
 	}
 	
 	public static void main(String[] args){
