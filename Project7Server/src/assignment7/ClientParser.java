@@ -4,28 +4,48 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import assignment7.MainServer;
+import javafx.application.Platform;
+import javafx.stage.Stage;
 
 public class ClientParser {
+	
+	
 	public static String loginRequest_01_Send(String username, String password){
 		return "01 "+username.length()+" "+password.length()+" "+username+" "+password;
 	}
+	
+	//if login is a success, set the client's user id
 	private static void loginRequest_02_Receive_Success(int userId){
 		
+		ClientMain.setuserID(userId);
 	}
+	
+	//if login is a failure, then exit the program
 	private static void loginRequest_02_Receive_Failure(){
+		Platform.runLater(new Runnable(){
+			public void run(){
+				ClientMain.loginFailure();
+			}
+		});
+		
 		
 	}
-	public static String makeConversation_03_Send(int userId,int chatNumber,int numUsersToConnectTo,int[] userIds){
-		String response="03 "+userId+" "+chatNumber+" "+userIds.length;
-		for(int i=0;i<userIds.length;i++){
-			response=response+" "+userIds[i];
+	public static String makeConversation_03_Send(int userId,int chatNumber,ArrayList<Integer> userIds){
+		String response="03 "+userId+" "+chatNumber+" "+userIds.size();
+		for(Integer u:userIds){
+			response=response+" "+u;
 		}
 		return response;
 	}
 	//Write handler below
 	public static void makeConversation_04_Receive(int userId,int chatNumberGeneratedByUser, int conversationId){
-		
+		Platform.runLater(new Runnable(){
+			public void run(){
+				ClientMain.conversationWindows.get(chatNumberGeneratedByUser).setServerConversationId(conversationId);
+				ClientMain.conversationWindows.get(chatNumberGeneratedByUser).start(new Stage());
+				
+			}
+		});
 	}
 	
 	
@@ -37,6 +57,11 @@ public class ClientParser {
 	//Write handler below
 	//Handler is called by 08 or 10 when applicable
 	private static void getUsersInNetwork_06_Receive(int userId, HashMap<Integer,String> users){
+		Platform.runLater(new Runnable(){
+			public void run(){
+				ClientMain.setUsernames(users);
+			}
+		});
 		
 	}
 	
@@ -223,11 +248,11 @@ public class ClientParser {
 			ArrayList<ClientMsg> newM=new ArrayList<ClientMsg>();
 			
 			for(int p=0;p<numNewMessages;p++){
-				Scanner sc=new Scanner(rest);
-				int userIdSent=sc.nextInt();
-				int timestampLen=sc.nextInt();
-				int msgLen=sc.nextInt();
-				rest=sc.nextLine();
+				Scanner scan=new Scanner(rest);
+				int userIdSent=scan.nextInt();
+				int timestampLen=scan.nextInt();
+				int msgLen=scan.nextInt();
+				rest=scan.nextLine();
 				
 				String timestamp=rest.substring(1,1+timestampLen);
 				String msg=rest.substring(2+timestampLen,2+timestampLen+msgLen);
@@ -285,17 +310,6 @@ public class ClientParser {
 		
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	private static String discardNextInt(String in){
 		int spotAfterInt=in.length();
 		boolean started=false;
@@ -324,7 +338,6 @@ public class ClientParser {
 				spotAfterInt=i;
 				break;
 			}
-
 		}
 		return Integer.parseInt(in.substring(startInt,spotAfterInt));
 	}
