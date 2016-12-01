@@ -21,9 +21,11 @@ public class ChatRequestWindow extends Application{
 	
 	private String requestingUser;
 	private Stage stage;
+	private PrintWriter out;
 
-	public ChatRequestWindow(String user){
+	public ChatRequestWindow(String user, PrintWriter out){
 		requestingUser = user;
+		this.out = out;
 	}
 
 	@Override
@@ -39,11 +41,17 @@ public class ChatRequestWindow extends Application{
 		Label request = new Label(requestingUser + " Would like to chat");
 		
 	    yes.setOnAction(e ->{ //if the button is clicked, try to login to the server 
+	    	synchronized(out){
 	    	//send yes response to server
+	    	}
+	    	stage.close();
 	    });
 	    
 	    no.setOnAction(a ->{
+	    	synchronized(out){
 	    	//send no response to server
+	    	}
+	    	stage.close();
 	    });
 		
 		main.setCenter(request);
